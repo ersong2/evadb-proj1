@@ -57,7 +57,7 @@ if __name__ == "__main__":
         tweets = api.search_tweets(search_query)
     except Exception as e:
         print(e)
-        print("Twitter search query failed without proper API credentials")
+        print("Twitter search query failed. Were your API credentials valid?")
 
     # Connect to EvaDB and get a database cursor for running queries
     evacursor = evadb.connect().cursor()
@@ -81,7 +81,7 @@ if __name__ == "__main__":
                                   + tweet.retweet_count + ", " + tweet.favorite_count + ")").df())
     except Exception as e:
         print(e)
-        print("No list of tweets to insert - did your search query fail?")
+        print("Insertion failed - either no list of tweets to insert or database does not exist. Did your search query or databse creation fail?")
 
     # dead testing code - but it would work
     '''
