@@ -3,6 +3,7 @@ import evadb
 
 import mysql.connector
 import tweepy
+import datetime
 
 # twitter API credentials
 consumer_key = ''
@@ -33,9 +34,17 @@ for tweet in tweets:
 mysqldb.commit()
 
 # Connect to EvaDB and get a database cursor for running queries
-cursor = evadb.connect().cursor()
+evacursor = evadb.connect().cursor()
 
-# create EvaDB database based on mysql database
-print(cursor.query("CREATE DATABASE IF NOT EXISTS eva_twitter_test WITH ENGINE = 'mysql', PARAMETERS = {\"user\":\"root\","
+# create EvaDB database
+print(evacursor.query("CREATE DATABASE IF NOT EXISTS eva_twitter_test WITH ENGINE = 'mysql', PARAMETERS = {\"user\":\"root\","
              + "\"password\": \"password\",\"host\":\"localhost\",\"port\":\"3306\",\"database\": \"eva_twitter_test\"};").df())
-print(cursor.query("CREATE TABLE IF NOT EXISTS tweets (id INTEGER UNIQUE, name TEXT(50), screenname TEXT(15), text TEXT(280), timestamp ANYTYPE, rtwts INTEGER, likes INTEGER)"))
+# timestamp as text because evadb seems not to support datetime format
+# YYYY-MM-DD_HH:MM:SS is exactly 19 characters
+print(evacursor.query("CREATE TABLE IF NOT EXISTS tweets (id INTEGER UNIQUE, name TEXT(50), screenname TEXT(15), text TEXT(280), timestamp TEXT(19), rtwts INTEGER, likes INTEGER)"))
+for tweet in tweets:
+    print(evacursor.query("INSERT INTO tweets (id, name, screenname, text, timestamp, rtwts, likes) VALUES ("
+                          +tweet.id + ", " + tweet.user.name + ", " + tweet.user.username + ", " + tweet.text
+                          + ", " + tweet.created_at.strftime("%Y-%m-%d %H:%M:%S") + ", " + tweet.retweet_count
+                          + ", " + tweet.favorite_count + ")"))
+print(evacursor.query("SELECT * from tweets"))
