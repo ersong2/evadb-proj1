@@ -63,28 +63,44 @@ if __name__ == "__main__":
     evacursor = evadb.connect().cursor()
 
     # create EvaDB database
-    print(evacursor.query("CREATE DATABASE IF NOT EXISTS eva_twitter_test WITH ENGINE = 'mysql', PARAMETERS = {\"user\":\""
-                          + user + "\", \"password\":\"" + password + "\", \"host\":\"" + host + "\", \"port\":\"" + port
-                          + "\", \"database\":\"" + database + "\"};").df())
+    try:
+        print(evacursor.query("CREATE DATABASE IF NOT EXISTS eva_twitter_test WITH ENGINE = 'mysql', PARAMETERS = {\"user\":\""
+                              + user + "\", \"password\":\"" + password + "\", \"host\":\"" + host + "\", \"port\":\"" + port
+                              + "\", \"database\":\"" + database + "\"};").df())
+    except Exception as e:
+        print(e)
+        print("Failed to create EvaDB database  - did you input the correct MySQL credentials?")
     # timestamp as text because evadb seems not to support datetime format
     # YYYY-MM-DD_HH:MM:SS is exactly 19 characters
-    print(evacursor.query("CREATE TABLE IF NOT EXISTS tweets (id INTEGER UNIQUE, name TEXT(50), screenname TEXT(15), text TEXT(280), timestamp TEXT(19), rtwts INTEGER, likes INTEGER)"))
+    print(evacursor.query("CREATE TABLE IF NOT EXISTS tweets (id INTEGER UNIQUE, name TEXT(50), screenname TEXT(15), text TEXT(280), timestamp TEXT(19), rtwts INTEGER, likes INTEGER)").df())
     try:
         for tweet in tweets:
             print(evacursor.query("INSERT INTO tweets (id, name, screenname, text, timestamp, rtwts, likes) VALUES ("
-                                  +tweet.id + ", " + tweet.user.name + ", " + tweet.user.username + ", " + tweet.text
-                                  + ", " + tweet.created_at.strftime("%Y-%m-%d %H:%M:%S") + ", " + tweet.retweet_count
-                                  + ", " + tweet.favorite_count + ")"))
+                                  + tweet.id + ", \"" + tweet.user.name + "\", \"" + tweet.user.username + "\", \""
+                                  + tweet.text + "\", \"" + tweet.created_at.strftime("%Y-%m-%d %H:%M:%S") + "\", "
+                                  + tweet.retweet_count + ", " + tweet.favorite_count + ")").df())
     except Exception as e:
         print(e)
         print("No list of tweets to insert - did your search query fail?")
 
-    # perform sentiment analysis
+    # dead testing code - but it would work
+    '''
+    print(evacursor.query("INSERT INTO tweets (id, name, screenname, text, timestamp, rtwts, likes) VALUES ("
+                          + "1" + ", \"" + "test_name" + "\", \"" + "test_username" + "\", \""
+                          + "placeholder_text" + "\", \"" + datetime.datetime(2023,10,17,15,30,0).strftime("%Y-%m-%d %H:%M:%S") + "\", "
+                          + "1" + ", " + "1" + ")").df())
+    print(evacursor.query("SELECT * from tweets").df())
+    '''
+
+    # code syntax is correct but sentiment analysis currently will not work
+    # will need to learn postgres and switch from MySQL
+    '''
     try:
         print("Performing sentiment analysis...")
-        print(evacursor.query("SELECT CHATGPT(\"Is the following tweet positive or negative? Only respond using \'positive\'"
-                              + "or \'negative\'. For example, Today is a nice day: positive; I hate Mondays: negative\","
-                                "text FROM eva_twitter_test.tweets)"))
+        print(evacursor.query("SELECT ChatGPT(\"Is the following tweet positive or negative? Only respond using \'positive\'"
+                              + "or \'negative\'. For example, Today is a nice day: positive. I hate Mondays: negative\","
+                                "text) FROM " + database + ".tweets;").df())
     except Exception as e:
         print(e)
         print("Sentiment analysis failed")
+    '''
